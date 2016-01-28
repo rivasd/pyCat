@@ -25,6 +25,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = secrets.SECRET_KEY
 
+#List here the apps representing the available experiments (only one for now!). it will be used to dynamically create
+#url patterns in pyCat.urls that will link to their respective urls.py. I thought this could be handy if we grow to have many experiments!
+LOCAL_APPS = (
+    'cat_experiment',          
+)
+
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -34,7 +41,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
-    'cat_experiment',
+    'expData',
+    'expManager',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
@@ -48,6 +56,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
 )
+INSTALLED_APPS += LOCAL_APPS
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',

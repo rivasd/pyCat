@@ -15,11 +15,23 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
-import cat_experiment.urls
 import allauth.urls
+import expManager.urls
+from django.conf import settings
+from django.apps import apps, AppConfig
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^accounts/', include(allauth.urls)),
-    url(r'^', include(cat_experiment.urls))
+    url(r'^', include(expManager.urls))
 ]
+
+#we dynamically add one url entry per app in settings.LOCAL_SETTINGS
+#NOTE THAT THE URL IS BUILT WITH THE 'label' PROPERTY of the applications' AppConfig. this is because i screwed up and used ugly names for this app :(
+#make sure each experiment has an appconfig configured, thus a default_app_config variable set in its __init__.py
+#see https://docs.djangoproject.com/en/1.9/ref/applications/
+for app in apps.get_app_configs():
+    if app.name in settings.LOCAL_APPS:
+        #the app is one of our experiments! create a url mapping to it, using its label
+        urlpatterns.append(url(r'^{0}/'.format(app.label), include(app.name+'.urls')))
+    
