@@ -1,3 +1,5 @@
 /.project
 /.pydevproject
 /.settings/
+/db.sqlite3
+/__pycache__/
