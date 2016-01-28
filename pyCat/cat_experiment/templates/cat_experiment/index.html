@@ -1,0 +1,106 @@
+
+{% load static from staticfiles %}
+{% load i18n %}
+<!doctype html>
+<html lang="en">
+<head>
+	<link rel="stylesheet" type="text/css" href="{% static 'cat_experiment/style/theme.css' %}">
+    <link rel="icon" type="image/ico" href="{% static 'cat_experiment/style/labologofullnostrokepale.png' %}" />
+	<meta charset="utf-8"/>
+	<title>Cognition - Communication</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+	<script src="https://code.jquery.com/ui/1.11.3/jquery-ui.min.js"></script>
+    <link href="https://code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css"
+    rel="stylesheet" type="text/css"></link>
+    <script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.14.0/jquery.validate.js"></script>
+    <script src="{% static 'cat_experiment/homePageUtilities.js' %}"></script> 
+</head>
+<body>
+    
+    <noscript>Cette page nécessite Javascript pour fonctionner, activez les scripts dans votre fureteur et revenez! <br/>
+                This page needs Javascript to function, please activate scripts in your browser and come back!
+            <style>div {display: none;}</style>
+    </noscript>
+
+    <ul class="langNav"><li><a href="index.php?lang=fr">Français</a></li><li><a href="index.html">English</a></li></ul>
+	<div id="page" >
+		<header id="header">
+		    <img src="{% static 'cat_experiment/style/Banner.png'%}" alt="Cognition - Communication" id="banner"/>
+            <form class="login" name="login" id="login" data-logged="">
+                <fieldset id="loginElements"  >
+                
+                    <div class="pseudoTableRow">
+                       <!-- <label for="user"></label>-->
+                        <input type="text" maxlength="16" max="16" name="username" required="required" class="darkbox usr" id="username" placeholder="nom d'usager"/>
+                    </div>
+                    <div class="pseudoTableRow">
+                       <!-- <label for="pass"></label> -->
+                        <input type="password" max="16" maxlength="16" min="8" name="password" required="required" class="darkbox passwd" id="password" placeholder="mot de passe"/>
+                    </div>
+                    <a href="#registrationWrapper"></a>
+                    <button class="button" type="submit" id="loginButton"></button>
+                </fieldset>
+                <fieldset id="logoutElements" >
+                    <button class="button" id="logoutButton"></button>
+                    <p id="greeting"></p>
+                </fieldset>
+            </form>
+			<a id='top'></a>
+			<p id="subtitle">Laboratoire de recherche - Chaire de recherche du Canada en sciences cognitives</p>        
+        </header>
+
+        <div id="registrationWrapper">
+            <div id="regInstructions">
+                <h3>Pour s'inscrire</h3>
+                <p>Nous vous demandons de vous créer un compte avant de procéder à l'expérience. Cela sert à nous assurer que ce sont biens des humains qui participent, mais aussi à vous rejoindre lors de tirages de prix de participations! Pour s'inscrire, simplement fournir: <br/><br/> - Un pseudonyme pour vous identifier sur notre site<br/> - Un mot de passe de secret pour vous authentifier<br/> - Votre adresse courriel (un lien de confirmation vous sera envoyé pour terminer le processus).</p>
+            </div>
+            <form name="registration" id="registration" action="" method="post">
+                <div class="pseudoTableRow">
+					<label for="username" form="registration">pseudonyme</label>
+					<input type="text" name="username" required="required" class="darkbox usr"/>
+					<p class="tip">votre identifiant, 16 caractères maximum</p>
+                </div>     
+					<div class="pseudoTableRow">
+					<label for="password" form="registration">mot de passe</label>
+					<input form="registration" type="password" name="password" required="required" class="darkbox passwd"/>
+					<p class="tip">Minimum 8 caractères</p>
+                </div>              
+                <div class="pseudoTableRow">
+					<input type="password" form="registration" required="required" class="darkbox passwd" name="passwordRepeat"/>
+					<p class="tip">veuillez répéter votre mot de passe</p>
+                </div>
+                <div class="pseudoTableRow">
+					<label>courriel</label>
+					<input type="email" name="email" form="registration" required="required" class="darkbox email"/>
+					<p class="tip">Pour le tirage de prix, pas de pourriels, promis!</p>
+                </div>                
+                <button type="submit">M'inscrire</button>
+            </form>
+        </div>
+		<div id="actualExperiment">
+			
+			<div id="instructionsUp">
+				<h3>Bonjour et bienvenue sur la page de notre expérience web: Catégorisation et perception</h3>
+				<p>Notre laboratoire de science cognitive est à la recherche de participants agés de 18 à 35 ans pour prendre part à une tâche de 30 minutes, menée entièrement à l'intérieur de votre fureteur.</p>
+				
+				<p>Vous n'êtes en aucun cas tenus de participer. Si à n'importe quel moment vous désirez vous désister, il vous suffit simplement de fermer cet onglet dans votre fureteur.</p>
+				<p>Notre expérience comprend deux tâches. La première vous demande de comparer des textures en noir et blanc générées par ordinateur et d'indiquer à quel point vous les trouvez semblables ou différentes. La deuxième tâche consiste à classer ces mêmes textures parmi deux catégories. À chaque essai, le programme vous dira si votre classification est correcte ou incorrecte. L'expérience comporte une troisième phase qui n'est qu'une reprise de la première.</p>
+				
+                <p>Votre participation se fera de façon totalement anonyme. Seuls les chercheurs et le superviseur auront accès aux données générées durant l'expérience. Il ne vous sera jamais demandé d'informations personnelles. En particulier, votre adresse IP n'est pas enregistrée et par conséquent ne pourra être révélée à quiconque par l'équipe de recherche.</p>
+
+				<p>En participant à notre expérience, vous contribuez à notre compréhension du cerveau humain. Le résultats des efforts de recherche en cognition apportent des bénéfices non seulement en milieu clinique (un nombre important de désordres psychiatriques présentent des déficits cognitifs, suggérant des facteurs communs), mais aussi dans le domaine de l'intelligence artificielle.</p>
+				
+			</div>
+			
+			<div id="jsPsychTarget">
+				<canvas id="stimCanvas"></canvas>
+			</div>
+			<div id="instructionsDown">
+				<button id="proceed">Je veux participer!</button>
+			</div>
+		</div>
+		<footer id="footer">
+		</footer>
+	</div>	
+</body>
+</html>
