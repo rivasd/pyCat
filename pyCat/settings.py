@@ -122,3 +122,4 @@ SITE_ID = 1
 #django-allauth settings
 ACCOUNT_EMAIL_REQUIRED = True
 LOGIN_REDIRECT_URL = "/"
+SOCIALACCOUNT_ADAPTER = 'expManager.adapters.SocialAuthAdapter'

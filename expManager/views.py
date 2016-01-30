@@ -9,6 +9,8 @@ def home(request):
     """
     The home page of the web experiments section
     """
+
+    
     available = Experiment.objects.all()
     return render(request, 'homepage.html', RequestContext(request, {'manips': available}))
 

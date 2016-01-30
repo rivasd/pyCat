@@ -33,5 +33,5 @@ urlpatterns = [
 for app in apps.get_app_configs():
     if app.name in settings.LOCAL_APPS:
         #the app is one of our experiments! create a url mapping to it, using its label
-        urlpatterns.append(url(r'^{0}/'.format(app.label), include(app.name+'.urls')))
+        urlpatterns.append(url(r'^{0}/'.format(app.label), include(app.name+'.urls', namespace=app.label)))
     
