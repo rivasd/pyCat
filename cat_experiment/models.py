@@ -2,14 +2,14 @@ from django.db import models
 from expManager.models import BaseBlock, BaseTrial, Participation
 from django.db.models.fields.related import ForeignKey
 
-# Create your models here.
+#Create your models here.
 class Block(BaseBlock):
-    run = ForeignKey(Participation, on_delete=models.CASCADE)
-    
+    pass
+      
 class Trial(BaseTrial):
     block = models.ForeignKey(Block, on_delete=models.CASCADE)
-    run = ForeignKey(Participation, on_delete=models.CASCADE)
     
+      
     #fields specific to our experiment
     similarity = models.IntegerField()
     rt = models.IntegerField()

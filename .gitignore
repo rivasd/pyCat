@@ -3,3 +3,4 @@
 /.settings/
 /db.sqlite3
 /__pycache__/
+/.tern-project

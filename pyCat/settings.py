@@ -14,6 +14,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 from pyCat import secrets
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+from django.conf.global_settings import AUTHENTICATION_BACKENDS
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -41,6 +42,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
+    'cat_experiment',
     'expData',
     'expManager',
     'django.contrib.sites',
@@ -56,7 +58,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
 )
-INSTALLED_APPS += LOCAL_APPS
+#INSTALLED_APPS += LOCAL_APPS
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -120,6 +122,11 @@ STATIC_URL = '/static/'
 SITE_ID = 1
 
 #django-allauth settings
-ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_EMAIL_REQUIRED = True
 LOGIN_REDIRECT_URL = "/"
-SOCIALACCOUNT_ADAPTER = 'expManager.adapters.SocialAuthAdapter'
+# SOCIALACCOUNT_ADAPTER = 'expManager.adapters.SocialAuthAdapter'
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+)

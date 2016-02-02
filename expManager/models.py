@@ -64,31 +64,41 @@ class BaseSubject(User):
 
 
 class Subject(BaseSubject):
+      
     pass
-    
+     
 class Experiment(BaseExperiment):
     participations = models.ManyToManyField(Subject, through='Participation')
     pass
-
+ 
 class Participation(models.Model):
     """
     Represents a single participation of a Subject to an Experiment
-    
+      
     So as to not pollute the database, should be created only when at least some usable data has been received.
     Participation objects have a 'complete' field, so it is possible to save intermediate completions in case your
-    experiment has to be divided in multiple sessions.
+    experiment has to be divided in multiple Runs.
     """
-    
+      
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     complete = models.BooleanField()
     started = models.DateTimeField()
     browser = models.CharField(max_length=64)
-    
+      
     #this is where the magic happens: store options in json format here so that experimental settings stay the same across sessions
     parameters = JSONField()
-    
+      
     pass
+
+class Run(models.Model):
+    """
+    Represents a single run of an experiment for a given subject. This is because one subject may split his Participation to
+    an Experiment over multiple Runs
+    """
+    participation = models.ForeignKey(Participation)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
     
 ######################## models to save and manipulate data ##################################
 
@@ -107,6 +117,7 @@ class BaseBlock(models.Model):
     
     block_type = models.CharField(max_length=16)
     order_in_run = models.IntegerField()
+    run = models.ForeignKey(Run)
     
 class BaseTrial(models.Model):
     """
@@ -117,6 +128,7 @@ class BaseTrial(models.Model):
     order_in_run = models.IntegerField()
     order_in_block = models.IntegerField()
     type = models.CharField(max_length = 32)
+    run = models.ForeignKey(Run)
     
     pass
 

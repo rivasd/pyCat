@@ -1,4 +1,11 @@
-{ {% extends "base.html" %}
+{% extends "base.html" %}
+{% load static %}
+
+{% block head %}
+<script src="{% static 'cat_experiment/global.js' %}"></script>
+
+{% endblock %}
+
 
 {% block content %}
 <div id="instructionsUp">
@@ -41,7 +48,7 @@
         <div class="entry">
             <h4 class="entryTitle"><span class="expand">[-] </span>Confidentiality and Anonymity</h4>
             <p class="entryBody">
-\                It is understood that all data collected (key presses, reaction times) is confidential. Only the members of the research team and interns will have access to the data. To protect your identity, you will be identified by a participant number known only to us. <br>The only personal information collected is your email address, that will also be kept confidential and never sold, transmitted, or used for spam.
+                It is understood that all data collected (key presses, reaction times) is confidential. Only the members of the research team and interns will have access to the data. To protect your identity, you will be identified by a participant number known only to us. <br>The only personal information collected is your email address, that will also be kept confidential and never sold, transmitted, or used for spam.
                 <br> All data will be kept only for the duration of the research project and will be subsequently destroyed. <br>No data pertaining to your IP adress or location is collected, and a cookie is given to your browser to enable you to login automatically and save your language preferences. All JavaScript source code is easily viewable in the browser.
             </p>
         </div>
@@ -67,7 +74,7 @@
             <p class="entryBody">
             If you have any additional questions about the project, your rights as a participant, or to request your data be permanently deleted, you can communicate with:<br>
             - Daniel Rivas, research assistant and webmaster<br><a href='mailto:cognitionlabmtl@gmail.com'>cognitionlabmtl@gmail.com </a><br>
-            "<br>The Institutional Committee On Human Research Ethics of UQAM has approved the research project in which you are about to take part. For information about the 
+            <br>The Institutional Committee On Human Research Ethics of UQAM has approved the research project in which you are about to take part. For information about the 
             responsibilities of the research team regarding human research ethics or to file a complaint, you can contact the presidency of the Committee through its secretarial department at
             the number (514) 987-3000 #7753 or by email at: CIEREH@UQAM.CA
             </p>
@@ -106,13 +113,11 @@
             </fieldset>
         </form>
     </div>
-
-</div>
 <div id="retroaction"></div>
 <div id="jsPsychTarget">
 	<canvas id="stimCanvas"></canvas>
 </div>
-<div id="instructionsDown>
+<div id="instructionsDown">
 	<a href="#top" class="button" id="start">Start</a>
 </div>
 {% endblock %}

@@ -432,6 +432,10 @@ form#login p{
     cursor: pointer;
 }
 
+.entryBody{
+	margin-left: 20px;
+}
+
 #consent{
     margin-top: 25px;
 }

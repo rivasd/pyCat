@@ -9,5 +9,6 @@ def index(request):
 
 @login_required
 def launch(request):
+    return render(request, 'cat_experiment/experiment.html', RequestContext(request))
     pass
     
