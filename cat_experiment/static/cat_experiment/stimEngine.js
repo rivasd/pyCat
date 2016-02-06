@@ -77,53 +77,75 @@ function StimEngine(opts){
 		return touched;
 	}
 	
+	function findSingle(a, b){
+		var hits={};
+		[a, b].forEach(function(elt, i, array) {
+			var other = i==0 ? b:a;
+			for(var key in elt){
+				if(elt.hasOwnProperty(key)){
+					if(!other.hasOwnProperty(key) ){
+						hits[key] = 'alone';
+					}
+				}
+			}
+		});
+		return Object.keys(hits);
+	}
+	
 	
 	// I am deeply sorry for this terrible method but I had no choice...
 	function generateVectorPair(firstType, secondType, distance){
 		//every feature position that is not fixed in EITHER definition is a degree of liberty we can use to meet the distance requirement
 		var firstType = jQuery.extend({}, firstType);
 		var secondType = jQuery.extend({}, secondType);
-		var freeElements = [];
-		var distanceToAdd = distance - getDistance(firstType, secondType);
-		
-		if(distanceToAdd < 0){
-			throw "distance demanded was lower than the original distance between the given vectors";
+		var inCommon =[];
+		var alone = findSingle(firstType, secondType);
+		//iterate through all the entries, sort those that are present in both
+		for(a in firstType){
+			if(firstType.hasOwnProperty(a)){
+				if(secondType.hasOwnProperty(a)){
+					inCommon.push(a);
+				}
+			}
 		}
 		
-		opts.mc.forEach(function(elem, idx, ary){
-			var i= firstType[idx];
-			var j= secondType[idx];
-			if(i == 'free' && j == 'free'){
-				freeElements.push(idx);
+		distance = distance - alone.length;
+		shuffle(inCommon);
+	
+		inCommon.forEach(function(elt, i, array) {
+			// find a settable attribute
+			var against;
+			var settable = (function(){
+				if(firstType[elt] == 'free'){
+					against = secondType;
+					return firstType;
+				}
+				else if(secondType[elt] == 'free'){
+					against = firstType;
+					return secondType;
+				}
+				else return null;
+			})();
+			
+			if(settable){
+				var other = against[elt];
+				if(other == 'free'){
+					other = Math.floor(Math.random() * 2);
+				}
+				if(distance > 0){
+					settable[elt] = other == 0? 1:0;
+					distance--;
+				}
+				else{
+					settable[elt] = other;
+				}
 			}
+			
 		});
 		
-		freeElements = shuffle(freeElements);
-		while(distanceToAdd > 0){	
-			if(freeElements.length = 0){
-				throw "not enough degrees of liberty to meet the distance requirement";
-			}
-			var chosen = freeElements.pop();
-			var value1 = Math.floor(Math.random()*2);
-			var value2;
-			if(value1 === 1){
-			    value2 = 0;
-		    }
-		    else{
-			    value2 = 1;
-		    }		
-			firstType[chosen] = value1;
-			secondType[chosen] = value2;
-			distanceToAdd--;
+		if(distance > 0){
+			throw "not enough settable attributes to achieve demanded vectorial distance";
 		}
-		//ok so now i guess we have met the distance requirement, but maybe there still are unfixed values?
-		var left;
-		while(left = freeElements.pop()){
-			var value1 = Math.floor(Math.random()*2);
-			firstType[left] = value1;
-			secondType[left] = value1;
-		}
-		//ok so now we have to deal with possible unset elements that were opposed an undefined element
 		fillUp(firstType);
 		fillUp(secondType);
 		return [firstType, secondType];
