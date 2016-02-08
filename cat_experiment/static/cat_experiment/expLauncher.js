@@ -192,6 +192,9 @@ function ExpLauncher(opts){
 		return definitions;
 	}
 	
+	module.
+	
+	
 	/**
 	 * Allows you to set the {@link StimEngine} object used to create the stimuli
 	 * 

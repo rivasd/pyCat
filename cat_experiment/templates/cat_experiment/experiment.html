@@ -2,8 +2,14 @@
 {% load static %}
 
 {% block head %}
+<script src="{% static 'cat_experiment/jspsych.js'%}"></script>
+<script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-categorize'%}"></script>
+<script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-text'%}"></script>
+<script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-similarity'%}"></script>
+<script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-html'%}"></script>
+<script src="{% static 'cat_experiment/stimEngine.js'%}"></script>
+<script src="{% static 'cat_experiment/expLauncher.js'%}"></script>
 <script src="{% static 'cat_experiment/global.js' %}"></script>
-
 {% endblock %}
 
 
