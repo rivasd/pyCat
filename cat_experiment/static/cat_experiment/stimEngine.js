@@ -34,9 +34,10 @@ function StimEngine(opts){
 	var module={};
 	var canvas = opts.canvas;
 	var canvasContext = canvas.getContext('2d');
-	var size = opts.mc[0][0].width //take the first MC and check its width, assume all MC are squares of this size
+	var microComponents = opts.mc;
+	var size = microComponents[0][0].width //take the first MC and check its width, assume all MC are squares of this size
 	var pool=[];
-	for(var i=0;i<opts.mc.length; i++){
+	for(var i=0;i<microComponents.length; i++){
 		pool.push(i);
 	}
 	
@@ -53,7 +54,7 @@ function StimEngine(opts){
 	
 	function getDistance(first, second){
 		var distance=0;
-		opts.mc.forEach(function(el, idx, ar){
+		microComponents.forEach(function(el, idx, ar){
 			var one = first[idx];
 			var two = second[idx];
 			
@@ -94,7 +95,7 @@ function StimEngine(opts){
 	
 	
 	// I am deeply sorry for this terrible method but I had no choice...
-	function generateVectorPair(firstType, secondType, distance){
+	module.generateVectorPair = function generateVectorPair(firstType, secondType, distance){
 		//every feature position that is not fixed in EITHER definition is a degree of liberty we can use to meet the distance requirement
 		var firstType = jQuery.extend({}, firstType);
 		var secondType = jQuery.extend({}, secondType);
@@ -158,14 +159,15 @@ function StimEngine(opts){
 	 * @param	{String}	def		Vector representation of the stimulus demanded. Array index is the number of the MC, the value at 
 	 * 								That index is value of that MC
 	 * @return	{DataURI}			The stimulus as a data URI string ready to be used in-browser
+	 * @method
 	 */
-	function singleDraw(def){
+	module.singleDraw = function singleDraw(def){
 		var struct = [];
 		for(var i=0; i<opts.width; i++){
 			struct[i]=[];
 		}		
 		//since I have decided to support different stimulus complexities, the pool of drawable MCs could change. Let's populate it
-		var pool = def.keys();
+		var pool = Object.keys(def);
 			
 		function isDrawable(x, y){
 			if(x<0 || y<0 || x>= opts.width || y>= opts.height){
@@ -199,7 +201,7 @@ function StimEngine(opts){
 				//now that we kept only the allowed MCs, choose one at random
 				var chosen = remaining[Math.floor(Math.random() * remaining.length)];
 				//Actually draw it on the <canvas>
-				canvasContext.drawImage(opts.mc[chosen][def[chosen]], x*size, y*size);
+				canvasContext.drawImage(microComponents[chosen][def[chosen]], x*size, y*size);
 				//mark that location as done
 				struct[x][y] = 'done';
 				//mark nearby locations not to allow that same MC that we just drew
@@ -221,14 +223,17 @@ function StimEngine(opts){
 	
 	/***************************************** PUBLIC API ***************************************/
 	
-	
-	
-	module.getVectorPair = function(first, second, distance){
-		return generateVectorPair(opts.types[first], opts.types[second], distance);
-	}
-	
 	module.drawPair = function(first, second){
 		return [singleDraw(first), singleDraw(second)];
+	}
+	
+	module.setComponents = function setComponents(comps){
+		microComponents = comps;
+		var size = microComponents[0][0].width //take the first MC and check its width, assume all MC are squares of this size
+		pool = [];
+		for(var i=0;i<microComponents.length; i++){
+			pool.push(i);
+		}
 	}
 	
 	return module;
