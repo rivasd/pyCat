@@ -22,9 +22,9 @@
  * @param 	{Object}			opts		Options for stimuli creation
  * @param	{DOMElement}		opts.canvas	The HTML5 canvas element used to render the stimuli
  * @param	{Function}			opts.onDraw	Callback that will be called after every rendering of a single image
- * @param	{Object[]}			opts.mc		The micro-component (MC) pairs used to draw the stimuli, each given as a object with two Image objects	
- * @param	{Image}				opts.mc[].0	First MC in the pair
- * @param	{Image}				opts.mc[].1	Second MC in the pair
+ * @param	{Object.Object}			opts.mc		The micro-component (MC) pairs used to draw the stimuli, each given as a object with two Image objects	
+ * @param	{Image}				opts.mc.0	First MC in the pair
+ * @param	{Image}				opts.mc.1	Second MC in the pair
  * @param	{Object<String, CategoryDef>}		opts.types	Each available category coupled with the vectorial definition of its invariants
  * @param	{Integer}			opts.height	The number of MCs that would fit along the height of the finished stimuli.
  * @param	{Integer}			opts.width	The number of MCs that would fit along the width of the finished stimuli.
@@ -37,7 +37,7 @@ function StimEngine(opts){
 	var microComponents = opts.mc;
 	var size = microComponents[0][0].width //take the first MC and check its width, assume all MC are squares of this size
 	var pool=[];
-	for(var i=0;i<microComponents.length; i++){
+	for(var i=0;i<Object.keys(microComponents).length; i++){
 		pool.push(i);
 	}
 	
@@ -50,21 +50,6 @@ function StimEngine(opts){
 	        array[j] = temp;
 	    }
 	    return array;
-	}
-	
-	function getDistance(first, second){
-		var distance=0;
-		microComponents.forEach(function(el, idx, ar){
-			var one = first[idx];
-			var two = second[idx];
-			
-			if(one != undefined && one !== 'free'){
-				if(one !== two){
-					distance++;
-				}
-			}
-		});
-		return distance;
 	}
 	
 	function fillUp(repr){
@@ -231,7 +216,7 @@ function StimEngine(opts){
 		microComponents = comps;
 		var size = microComponents[0][0].width //take the first MC and check its width, assume all MC are squares of this size
 		pool = [];
-		for(var i=0;i<microComponents.length; i++){
+		for(var i=0;i<Object.keys(microComponents).length; i++){
 			pool.push(i);
 		}
 	}

@@ -118,12 +118,14 @@ function ExpLauncher(opts){
 	 * length matchesthe 'length' argument.
 	 * 
 	 * @param	{Array}						simTimeline	An array of trial-objects as returned by a call to {@link expLauncher#getSimTimelineWithImages} or alternatively to {@link expLauncher#getVectorialSimilarityTimeline} if you don't want actual stimuli in the trials but only vectorial representations
-	 * @param	{Object<String, number>}	answers		A dictionnary assigning a keycode to a category name, one per allowed response.The category names used when creating the 'simTimelin' must be defined in this argument.
+	 * @param	{Object<String, number>}	answers		A dictionnary assigning a keycode to a category name, one per allowed response.The category names used when creating the 'simTimeline' must be defined in this argument.
 	 * @param	{Integer}					length		How many trials long should the resulting timeline be.
 	 * @return	{Object[]}								An array of objects looking like jsPsych trials, but with names instead of actual stimuli					
 	 */
 	module.getCategorizationTimelineFromSim = function(simTimeline, answers, length){
 		var timeline = [];
+		var choices = [];
+		
 		
 		simTimeline.forEach(function(trial, i, array) {
 			var first = {type: 'categorize'};
@@ -192,7 +194,6 @@ function ExpLauncher(opts){
 		return definitions;
 	}
 	
-	module.
 	
 	
 	/**
