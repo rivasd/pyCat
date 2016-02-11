@@ -1,7 +1,7 @@
 from django.db import models
 from expManager.models import BaseBlock, BaseTrial, Participation
 from django.db.models.fields.related import ForeignKey
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from cat_experiment.exceptions import SettingException
 import json
 
@@ -24,7 +24,7 @@ class Trial(BaseTrial):
     
 class GeneralSettingManager(models.Manager):
     def retrieve(self, which):
-        instance = super(GeneralSettingManager, self).get_queryset().get(name=which)
+        instance = super(GeneralSettingManager, self).get(name=which)
         instance.timeline = []
         microcomponent = {}
         rawPairs = instance.microcomponentpair_set.all().values()
@@ -128,6 +128,11 @@ class SimilarityPhaseSetting(models.Model):
     def __str__(self):
         return self.name
     
+    def toDict(self):
+        dictionary = dict(self.__dict__)
+        del dictionary['_state']
+        return dictionary
+    
 
 class CategorizationPhaseSetting(models.Model):
     """
@@ -151,7 +156,12 @@ class CategorizationPhaseSetting(models.Model):
     
     def toJSON(self):
         self.finalize()
-        return 
+        return
+    
+    def toDict(self):
+        dictionary = dict(self.__dict__)
+        del dictionary['_state']
+        return dictionary
     
 class Category(models.Model):
     name = models.CharField(max_length=16)

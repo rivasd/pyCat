@@ -129,6 +129,5 @@ class BaseTrial(models.Model):
     order_in_block = models.IntegerField()
     type = models.CharField(max_length = 32)
     run = models.ForeignKey(Run)
-    
-    pass
+
 

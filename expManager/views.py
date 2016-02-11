@@ -3,6 +3,7 @@ from django.template import RequestContext
 from django.conf import settings
 from importlib import import_module
 from expManager.models import Experiment
+from django.views.generic.base import View
 
 # Create your views here.
 def home(request):
@@ -23,3 +24,4 @@ def check_manips():
     """
     
     pass
+
