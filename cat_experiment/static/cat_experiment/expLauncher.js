@@ -4,11 +4,11 @@
  * @requires jsPsych
  * @param opts
  */
-function ExpLauncher(opts){
+function ExpLauncher(opts, canvas){
 	var module ={};
 	
 	/** @type {StimEngine} */
-	var engine = StimEngine(opts);
+	var engine = StimEngine(opts, canvas);
 	
 	
 	/**
@@ -44,6 +44,64 @@ function ExpLauncher(opts){
 		return combinations;
 	}
 	
+	function getDistancesArray(diff, attNumber){
+		var distances = [];
+		for(var j=0; j+diff<=attNumber; j++){
+			distances.push(j);
+		}
+		return distances;
+	}
+	
+	//gets browser info, god knows how this works...
+	function get_browser_info(){
+	    var ua=navigator.userAgent,tem,M=ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || []; 
+	    if(/trident/i.test(M[1])){
+	        tem=/\brv[ :]+(\d+)/g.exec(ua) || []; 
+	        return {name:'IE',version:(tem[1]||'')};
+	        }   
+	    if(M[1]==='Chrome'){
+	        tem=ua.match(/\bOPR\/(\d+)/)
+	        if(tem!=null)   {return {name:'Opera', version:tem[1]};}
+	        }   
+	    M=M[2]? [M[1], M[2]]: [navigator.appName, navigator.appVersion, '-?'];
+	    if((tem=ua.match(/version\/(\d+)/i))!=null) {M.splice(1,1,tem[1]);}
+	    return {
+	      name: M[0],
+	      version: M[1]
+	    };
+	 }
+	
+	
+	module.loadMicroComponents = function(settings, callback){
+		var count = 0
+		var done = Object.keys(settings.microcomponents).length * 2;
+		
+		function check(){
+			if(count == done){
+				callback(settings);
+			}
+		}
+		function load(){
+			count++;
+			check();
+		}
+		for(var pair in settings.microcomponents){
+			if(settings.microcomponents.hasOwnProperty(pair)){
+				var pair = settings.microcomponents[pair];
+				for(var attr in pair){
+					if(pair.hasOwnProperty(attr)){
+						var url = pair[attr];
+						var mc = new Image();
+						mc.onload = load;
+						mc.src= url;
+						pair[attr] = mc;
+					}
+				}
+			}
+		}
+		
+	}
+	
 	/**
 	 * Returns a list of objects containing the all the possible trials made by combining two images among the category names in 'names' and each available distance
 	 * Each object is meant to represent a similarity judgment trial. A trials comprises two stimuli, each of a particular category among 'names' plus a vectorial distance among 'distances'
@@ -61,7 +119,7 @@ function ExpLauncher(opts){
 			var extraData = {};
 			extraData.firstStim = elt.pairLabel[0];
 			extraData.secondStim = elt.pairLabel[1];
-			extraData.type = extraData.firstStim == extraData.secondStim ? 'same' : 'different';
+			extraData.kind = extraData.firstStim == extraData.secondStim ? 'same' : 'different';
 			extraData.distance = elt.distace;
 			elt.data = extraData;
 		});
@@ -102,11 +160,11 @@ function ExpLauncher(opts){
 		vectorTimeline.forEach(function(raw, i, array) {
 			var multiple = raw.stimuli.length == undefined ? false : true;
 			if(!multiple){
-				raw.stimuli = engine.singleDraw(raw.stimulus)
+				raw.stimulus = engine.singleDraw(raw.stimulus)
 			}
 			else{
-				var first = engine.singleDraw(raw.stimuli[0]);
-				var second = engine.singleDraw(raw.stimuli[1]);
+				raw.stimuli[0] = engine.singleDraw(raw.stimuli[0]);
+				raw.stimuli[1] = engine.singleDraw(raw.stimuli[1]);
 			}
 			if(callback) callback(i, array.length);
 		});
@@ -117,27 +175,24 @@ function ExpLauncher(opts){
 	 * is larger than the total number of stimuli in the given similarity timeline, stimuli will be repeated roughly uniformly until the total
 	 * length matchesthe 'length' argument.
 	 * 
-	 * @param	{Array}						simTimeline	An array of trial-objects as returned by a call to {@link expLauncher#getSimTimelineWithImages} or alternatively to {@link expLauncher#getVectorialSimilarityTimeline} if you don't want actual stimuli in the trials but only vectorial representations
+	 * @param	{Array}						simTimeline	An array of trial-objects as returned by a call to {@link expLauncher#replaceVectorsWithImage} or alternatively to {@link expLauncher#getVectorialSimilarityTimeline} if you don't want actual stimuli in the trials but only vectorial representations
 	 * @param	{Object<String, number>}	answers		A dictionnary assigning a keycode to a category name, one per allowed response.The category names used when creating the 'simTimeline' must be defined in this argument.
 	 * @param	{Integer}					length		How many trials long should the resulting timeline be.
 	 * @return	{Object[]}								An array of objects looking like jsPsych trials, but with names instead of actual stimuli					
 	 */
 	module.getCategorizationTimelineFromSim = function(simTimeline, answers, length){
 		var timeline = [];
-		var choices = [];
-		
-		
 		simTimeline.forEach(function(trial, i, array) {
 			var first = {type: 'categorize'};
 			var second = {type: 'categorize'};
 			first.stimulus = trial.stimuli[0];
 			first.data = {category: trial.data.firstStim};
-			first.key_answer = answers[first.stimulus];
+			first.key_answer = answers[first.data.category];
 			timeline.push(first);
 			
 			second.stimulus = trial.stimuli[1];
 			second.data = {category: trial.data.secondStim};
-			second.key_answer = answers[second.stimulus];
+			second.key_answer = answers[second.data.category];
 			timeline.push(second);
 		});
 		if(length > timeline.length){
@@ -150,6 +205,7 @@ function ExpLauncher(opts){
 			}
 			timeline = timeline.slice(0, length);
 		}
+		shuffle(timeline);
 		return timeline;
 	}
 	
@@ -185,16 +241,113 @@ function ExpLauncher(opts){
 			values.push(i);
 		}
 		var chosen = jsPsych.randomization.sample(attributes, diff, false);
-		chosen.forEach(function(elem, idx, ar){
+		chosen.forEach(function(attToSet, idx, ar){
 			shuffle(values);
 			values.forEach(function(elt, i, array) {
-				definitions[i][elem] = elt;
+				definitions[i][attToSet] = elt;
 			});
 		});
 		return definitions;
 	}
 	
 	
+	/**
+	 * The settings object returned by our server. This list of properties is non-exhaustive and more can appear, but those are the required ones.
+	 * @typedef		{Object}	ServerSetting	A dictionnary read from a JSON string returned by a call to our server requesting a description of the experiment to run
+	 * @property	{Integer}	levels			If set, this is the number of difficulty levels from which we should choose at random when creating an experiment, starting from the easiest difficulty. E.g. if levels is 2 and there are 5 microcomponents pairs, then this module will randomly create experiments where either 5/5 or 4/5 microcomponents are invariant. If levels = 4, then it would choose among 5/5, 4/5, 3/5, 2/5. If 0, all possibilities will be considered.
+	 * @property	{Object}	microcomponents	A dictionary with number-in-string as keys, and microcomponent pair as values. Each pair is itself an object, with a "string containing a number" as keys, and a path as value. 
+	 * @property	{Object<String, Integer>}	categories		The names and keycodes of the categories will we use.
+	 * @property	{Array}		timeline		An array of {@link ServerBlock}s, used to tell the client how we want the experiment built.
+	 */
+	
+	/**
+	 * A dictionary, returned by our django server, describing a block within the timeline. it's settings are meant to be applied to all trials within.
+	 * Together, these blocks create the timeline property of a {@link ServerSetting}
+	 * @typedef		{Object}	ServerBlock	
+	 * @property	{String}	type		The kind of trial this block is/contains. It is the value of the 'type' parameter of a jsPsych trial. see: http://docs.jspsych.org/plugins/overview/
+	 * @property	{Integer}	reprise		The index inside a {@link ServerSetting.timeline} of the block that is meant to be identically repeated here. If defined, do not define any other attribute.
+	 */
+	
+	/**
+	 * Main method, creates a fully usable jsPsych timeline according to the given settings, creating stimuli on-the-fly from micro-components with my awesome {@link stimEngine} object
+	 * @method
+	 * @param	{Function}			atEach		What to do once the timeline and stimuli are fully created
+	 * @param	{ServerSetting}		settings	The raw settings object fetched from the Django server. Should contain an entry named 'timeline' that is almost like a jsPsych timeline.
+	 * @param	{Object)			opts		Some settings about how to create the metadata
+	 * @return	{Object	}						An object with two properties: 'timeline', a fully working jsPsych timeline ready to use with jsPsych.init, and 'meta', containing information about things decided/discovered client-side that you might want to save to your server
+	 */
+	module.createStandardExperiment = function(settings, atEach, opts){
+		
+		var numberOfCat = Object.keys(settings.categories).length;
+		var attNumber = Object.keys(settings.microcomponents).length;
+		if(settings.levels > attNumber){
+			throw "requested more possible difficulties than there are attribute pairs";
+		}
+		var diffPool = [];
+		for(var d=attNumber; d>=(attNumber - settings.levels); d--){
+			diffPool.push(d); //zero-index fix, ugh...
+		}
+		var difficulty = diffPool[Math.floor(Math.random()*diffPool.length)]; //among the possible difficulties, take one at random
+		var categories = module.createOrthogonalDefs(numberOfCat, attNumber, difficulty);
+		var definitions = {};
+		var idx =0;
+		for (cat in settings.categories){
+			if(settings.categories.hasOwnProperty(cat)){
+				definitions[cat] = categories[idx];
+			}
+			idx++;
+		}
+		var timeline =[];
+		var meta = {difficulty: difficulty, definitions: definitions};
+		var stimuli;
+		// ok so now we should have all we need to create stuff, lets iterate through the given timeline
+		for(var step=0; step<settings.timeline.length; step++){
+			var block = settings.timeline[step];
+			//Let's start with an easy case: a reprise of a previous block
+			if(block.reprise != undefined){
+				timeline.push(timeline[block.reprise]);
+			}
+			else{
+				//Ugh, we have to create an actual trial
+				//TODO handle cases where block could be a trial to use as is, or an actual bloc where we have to simply repeat or generate
+				//for now let's assume all ServerBlocks will ask us to generate a series of trials that are not all identical
+				if(block.type == 'similarity'){
+					//oh god we have to figure out the distances...
+					var distances = getDistancesArray(difficulty, attNumber);
+					var rawTimeline = module.createRawSimilarityTimeline([Object.keys(definitions)[0], Object.keys(definitions)[1]], distances, block.length)
+					var vectorTimeline = module.createVectorialSimilarityTimeline(rawTimeline, definitions);
+					//set the correct final distance in the trial meta data
+					vectorTimeline.forEach(function(elt, i, array) {
+						elt.data.distance = elt.data.kind == 'same' ? elt.data.distance : elt.data.distance+difficulty;
+					});
+					if(opts.saveDescription){
+						meta.description = rawTimeline;
+					}
+					//draw the stimuli!
+					module.replaceVectorsWithImage(vectorTimeline, atEach);
+					block.timeline = vectorTimeline;
+					if(opts.reuseStim && block.master){
+						stimuli = vectorTimeline;
+					}
+				}
+				else if(block.type == 'categorize'){
+					if(opts.reuseStim){
+						block.timeline = module.getCategorizationTimelineFromSim(stimuli, settings.categories, block.length);
+					}
+					else{
+						//I dont have code to create a categorization task from scratch but it would simple to do. Ill do this if i have time
+					}
+				}
+				timeline.push(block);
+			}
+		}
+		//We should end by adding some stuff to the meta object here
+		var browser = get_browser_info();
+		meta.browser = browser.name;
+		meta.browser_version = browser.version;
+		
+		return {meta: meta, timeline: timeline};
+	}
 	
 	/**
 	 * Allows you to set the {@link StimEngine} object used to create the stimuli

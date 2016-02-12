@@ -42,7 +42,7 @@ def getExperiment(request):
         categorization = CategorizationPhaseSetting.objects.retrieve(version)
         settings.pushToTimeline(similarity.toDict())
         settings.pushToTimeline(categorization.toDict())
-        settings.pushToTimeline(similarity.toDict())
+        settings.pushToTimeline({'reprise': 0})
         
         #now that the timeline attribute of the main setting object is filled, convert the setting object to a dict and JSON it away!
         return JsonResponse(settings.toDict())

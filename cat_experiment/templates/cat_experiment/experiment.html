@@ -3,10 +3,10 @@
 
 {% block head %}
 <script src="{% static 'cat_experiment/jspsych.js'%}"></script>
-<script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-categorize'%}"></script>
-<script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-text'%}"></script>
-<script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-similarity'%}"></script>
-<script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-html'%}"></script>
+<script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-categorize.js'%}"></script>
+<script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-text.js'%}"></script>
+<script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-similarity.js'%}"></script>
+<script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-html.js'%}"></script>
 <script src="{% static 'cat_experiment/stimEngine.js'%}"></script>
 <script src="{% static 'cat_experiment/expLauncher.js'%}"></script>
 <script src="{% static 'cat_experiment/global.js' %}"></script>
@@ -121,6 +121,7 @@
     </div>
 <div id="retroaction"></div>
 <div id="jsPsychTarget">
+	<div id="progressBar"></div>
 	<canvas id="stimCanvas"></canvas>
 </div>
 <div id="instructionsDown">

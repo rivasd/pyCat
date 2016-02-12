@@ -20,26 +20,31 @@
  * 
  * 
  * @param 	{Object}			opts		Options for stimuli creation
- * @param	{DOMElement}		opts.canvas	The HTML5 canvas element used to render the stimuli
- * @param	{Function}			opts.onDraw	Callback that will be called after every rendering of a single image
- * @param	{Object.Object}			opts.mc		The micro-component (MC) pairs used to draw the stimuli, each given as a object with two Image objects	
- * @param	{Image}				opts.mc.0	First MC in the pair
- * @param	{Image}				opts.mc.1	Second MC in the pair
+ * @param	{DOMElement}		canvas		The HTML5 canvas element used to render the stimuli
+ * @param	{Object.Object}		opts.microcomponents		The micro-component (MC) pairs used to draw the stimuli, each given as a object with two Image objects	
  * @param	{Object<String, CategoryDef>}		opts.types	Each available category coupled with the vectorial definition of its invariants
  * @param	{Integer}			opts.height	The number of MCs that would fit along the height of the finished stimuli.
  * @param	{Integer}			opts.width	The number of MCs that would fit along the width of the finished stimuli.
  */
-function StimEngine(opts){
+function StimEngine(opts, canvas){
 	//this is just declaring a module and unpacking the options, nothing to see here...
 	var module={};
-	var canvas = opts.canvas;
 	var canvasContext = canvas.getContext('2d');
-	var microComponents = opts.mc;
+	var microComponents = opts.microcomponents;
 	var size = microComponents[0][0].width //take the first MC and check its width, assume all MC are squares of this size
 	var pool=[];
 	for(var i=0;i<Object.keys(microComponents).length; i++){
 		pool.push(i);
 	}
+	if(opts.density){
+		var height = opts.density;
+		var width = opts.density;
+	}
+	else{
+		var height = opts.height;
+		var width = opts.width;
+	}
+	
 	
 	//helper shuffle function
 	function shuffle(array) {
@@ -79,7 +84,11 @@ function StimEngine(opts){
 	}
 	
 	
-	// I am deeply sorry for this terrible method but I had no choice...
+	/**
+	 * Generates a pair of vectorial representations of a stimulus from two partial ones, and a distance parameter
+	 * @method
+	 * @param	{Integer}	distance	How many attributes to ensure are of different value between the two types IN ADDITION to whatever distance already is between the two other defs. If you want the real final distance, you will have to calculate it yourself.
+	 */
 	module.generateVectorPair = function generateVectorPair(firstType, secondType, distance){
 		//every feature position that is not fixed in EITHER definition is a degree of liberty we can use to meet the distance requirement
 		var firstType = jQuery.extend({}, firstType);
@@ -95,7 +104,7 @@ function StimEngine(opts){
 			}
 		}
 		
-		distance = distance - alone.length;
+		//distance = distance - alone.length; 
 		shuffle(inCommon);
 	
 		inCommon.forEach(function(elt, i, array) {
@@ -110,7 +119,13 @@ function StimEngine(opts){
 					against = firstType;
 					return secondType;
 				}
-				else return null;
+				else{
+					// we are assured that both attributes are defined but neither is free, that means we can reduce the distance count if they are different!!
+					if(firstType[elt] != secondType[elt]){
+						// distance--; Thought I had made a mistake, turned out to be a feature lol...
+						return null
+					}
+				}
 			})();
 			
 			if(settable){
@@ -148,14 +163,14 @@ function StimEngine(opts){
 	 */
 	module.singleDraw = function singleDraw(def){
 		var struct = [];
-		for(var i=0; i<opts.width; i++){
+		for(var i=0; i<width; i++){
 			struct[i]=[];
 		}		
 		//since I have decided to support different stimulus complexities, the pool of drawable MCs could change. Let's populate it
 		var pool = Object.keys(def);
 			
 		function isDrawable(x, y){
-			if(x<0 || y<0 || x>= opts.width || y>= opts.height){
+			if(x<0 || y<0 || x>= width || y>= height){
 				return false;
 			}
 			else if(struct[x][y] === 'done'){
@@ -196,13 +211,13 @@ function StimEngine(opts){
 				return;
 			}
 		}
-		for(var i=0; i< opts.width; i++){
-			for(var j=0; j< opts.height; j++){
+		for(var i=0; i< width; i++){
+			for(var j=0; j< height; j++){
 				drawSingleMC(i, j);
 			}
 		}
 		var image = canvas.toDataURL();
-		canvasContext.clearRect(0, 0, opts.width*size, opts.height*size);
+		canvasContext.clearRect(0, 0, width*size, height*size);
 		return image;
 	}
 	

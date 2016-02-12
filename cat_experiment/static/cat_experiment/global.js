@@ -24,8 +24,41 @@ $(function () {
     function letsGo(pageText, target, paintingArea) {
         var toKill = document.getElementById(pageText);
         toKill.parentNode.removeChild(toKill);
-        var experience = new ExperimentManager(target);
-        experience.launch(paintingArea, target);
+        //NEW CODE HERE!!
+        var before = $("#start").html();
+        $("#start").html('<img src="/static/style/ajax-loader.gif"/>');
+       
+        $.ajax('load', {
+        	dataType: "json", //because that is what we expect from our server
+        	data: {type: 'test'},
+        	error: function(){
+        		alert("someone tell the webmaster his server is broken...");
+        	},
+        	success: function(settings){
+        		var launcher = ExpLauncher(settings, document.getElementById("stimCanvas")); //initialize a launcher and drawer 
+        		var $bar = $("#progressBar");
+        		$bar.progressbar({
+        			max : settings.timeline[0].length
+        		});
+        		function increment(idx, total){
+        			$bar.progressbar("value", idx);
+        		};
+        		launcher.loadMicroComponents(settings, function(){
+        			var exp = launcher.createStandardExperiment(settings, increment, {reuseStim: true, saveDescription: true});
+            		$bar.progressbar("destroy");
+            		//HERE IS WHERE THE EXPERIMENT BEGINS
+            		jsPsych.init({
+            			display_element: $("#jsPsychTarget"),
+            			timeline: exp.timeline,
+            			on_finish: function(){
+            				jsPsych.data.displayData("json");
+            			}
+            		})
+        		})
+        		
+        	}
+        });
+        
     }
 
     $("#start").click(function (e) {

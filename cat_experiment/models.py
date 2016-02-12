@@ -30,31 +30,31 @@ class GeneralSettingManager(models.Manager):
         rawPairs = instance.microcomponentpair_set.all().values()
         for pair in rawPairs:
             microcomponent[pair['index']] = {
-                '0': "static/cat_experiment/attributes/"+pair['first'],
-                '1': "static/cat_experiment/attributes/"+pair['second']
+                '0': "/static/cat_experiment/attributes/"+pair['first'],
+                '1': "/static/cat_experiment/attributes/"+pair['second']
             }
         instance.microcomponents = microcomponent
+        instance.duringLoad = _("Please wait while images are created...")
+        categories = {}
+        for category in instance.category_set.all().values():
+            categories[category['name']] = category['keycode']
+            
+        instance.categories = categories
         return instance
     
 class SimilarityManager(models.Manager):
     def retrieve(self, which):
-        instance = super(SimilarityManager, self).get_queryset().get(name=which)
+        instance = super(SimilarityManager, self).get(name=which)
         instance.type = "similarity"
         instance.labels = [_("very different"), _("identical")]
         return instance
     
 class CategorizationManager(models.Manager):
     def retrieve(self, which):
-        instance = super(CategorizationManager, self).get_queryset().get(name=which)
+        instance = super(CategorizationManager, self).get(name=which)
         instance.type = "categorize"
-        answers = {}
-        
-        for category in instance.category_set.all().values():
-            answers[category['name']] = category['keycode']
-            
         instance.correct_text = _("correct!")
         instance.incorrect_text = _("Oops! Incorrect!")
-        instance.answers = answers
         return instance
     
 class GeneralSetting(models.Model):
@@ -72,6 +72,7 @@ class GeneralSetting(models.Model):
     max_consecutive_timeouts = models.IntegerField(help_text="The experiment will automatically abort if this number if the subject does not respond fast enough to this many consecutive trials")
     max_total_timeouts = models.IntegerField(help_text="The experiment will automatically abort if this many trials are allowed to timeout in total")
     fixation_cross = models.CharField(max_length = 32, help_text="The path to fixation cross image, will be appended to static/your_app_name/")
+    levels = models.IntegerField(help_text="Starting from the easiest difficulty (all microcomponents are invariants), how many difficulty levels should be allowed? (the final difficulty will be chosen at random among the allowed levels)")
     # Stimuli creation settings
     density = models.IntegerField(help_text="how many micro components should fit along the height and width of the finished stimulus, controls how dense is the stimulus")
     
@@ -166,7 +167,7 @@ class CategorizationPhaseSetting(models.Model):
 class Category(models.Model):
     name = models.CharField(max_length=16)
     keycode = models.IntegerField()
-    setting = models.ForeignKey(CategorizationPhaseSetting)
+    setting = models.ForeignKey(GeneralSetting)
     
     def __str__(self):
         return self.name

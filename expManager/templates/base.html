@@ -4,8 +4,10 @@ note that it is not namespaced (it's not place inside an expManager directory wi
 we can refer to it with less typing.
 
 Here is a list of the expandable block names:
+
 title	the title of the page
 head	additional things to add to the head like more css files and linked javascript modules
+content	Well, the content of the page
 
 @author Daniel Rivas
 {% endcomment %}
@@ -16,7 +18,7 @@ head	additional things to add to the head like more css files and linked javascr
 <!doctype html>
 <html lang="{{ lang }}">
 <head>
-	<link rel="stylesheet" type="text/css" href="{% static 'style/theme.css' %}">
+	
     <link rel="icon" type="image/ico" href="{% static 'style/labologofullnostrokepale.png' %}" />
 	<meta charset="utf-8"/>
 	<title>{% block title%} Laboratoire Cognition communication UQAM {% endblock %}</title>
@@ -25,7 +27,7 @@ head	additional things to add to the head like more css files and linked javascr
     <link href="https://code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"></link>
     <script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.14.0/jquery.validate.js"></script>
     <script src="{% static 'homePageUtilities.js' %}"></script>
-    
+    <link rel="stylesheet" type="text/css" href="{% static 'style/theme.css' %}">
     {% block head %}{% endblock %}
     
 </head>
