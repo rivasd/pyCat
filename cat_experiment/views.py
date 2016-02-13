@@ -33,9 +33,9 @@ def getExperiment(request):
     # Get the name of requested experiment (actually the namespace of the include() call, but that should have been set properly in pyCat.urls.py right?)
     experiment_name = request.resolver_match.app_name
     # Find any saved participation of this user to this experiment
-    previous = Participation.objects.filter(subject__username=request.user.username, experiment__label=experiment_name)
+    previous = Participation.objects.filter(subject__user__username=request.user.username, experiment__label=experiment_name)
     
-    if previous.exists():
+    if previous.exists() and not previous[0].experiment.allow_repeats:
         # This subject has a participation to this experiment, should we allow to redo or continue? code that sh*t later
         return JsonResponse({'error': 'cannot repeat this experiment'})
         pass
@@ -77,7 +77,7 @@ def save(request):
         return JsonResponse({'error': _('experiment name was not properly calibrated')})
     
     try:
-        subject = Subject.objects.get(username=request.user.username)
+        subject = Subject.objects.get(user__username=request.user.username)
     except:
         return JsonResponse({'error': _('There is no subject for that id number')})
     
@@ -92,7 +92,7 @@ def save(request):
     new_run.save()
     
     trials = sort_trials(data)
-    for trial_type, trialBatch in trials:
+    for trial_type, trialBatch in trials.items():
         
         if trial_type == "categorize":
             model = CategorizationTrial
@@ -114,10 +114,11 @@ def save(request):
             instances.append(instance)
         
         # finally we do the INSERTs !
-        try:
-            model.objects.bulk_create(instances)
-        except:
-            return JsonResponse({'error': _('Failure to bulk write to database, contact administrator')})
+        
+        model.objects.bulk_create(instances)
+#         except Exception:
+#             raise Exception
+#             return JsonResponse({'error': _('Failure to bulk write to database, contact administrator')})
         
         # SUCCESS!! :) <3
         # mark the participation as complete if this run was enough

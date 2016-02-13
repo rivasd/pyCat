@@ -27,7 +27,7 @@ class BaseExperiment(models.Model):
         return self.verbose_name
     
 
-class BaseSubject(User):
+class BaseSubject(models.Model):
     """
     Abstract base model for a registered human subject with it's full profile data
     
@@ -35,7 +35,7 @@ class BaseSubject(User):
     'User' already has basic contact info and date joined info, so put here fields that are "experimental subject" things like demographics and other
     """
     
-    
+    user = models.OneToOneField(User)
     
     class Meta:
         abstract = True
@@ -64,7 +64,7 @@ class BaseSubject(User):
     years_of_schooling = models.IntegerField(blank=True, null=True)
     
     def __str__(self):
-        return self.username
+        return self.user.username
 
 
 # the actual models we are going to be using. Usually this would in another app's models.py importing this file's base abstract classes
@@ -133,11 +133,14 @@ class BaseTrial(models.Model):
     
     provided fields are: order within the block, order within the whole experiment, a generic 'type' field
     """
+    class Meta:
+        abstract = True
+    
     internal_node_id = models.CharField(max_length=16)
     trial_index = models.IntegerField()
     trial_type = models.CharField(max_length=32)
     time_elapsed = models.IntegerField()
-    timeout = models.BooleanField()
+    timeout = models.BooleanField(blank= True)
     run = models.ForeignKey(Run)
 
 

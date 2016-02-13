@@ -100,7 +100,6 @@ function ExpLauncher(opts, canvas){
 				}
 			}
 		}
-		
 	}
 	
 	/**
@@ -121,7 +120,7 @@ function ExpLauncher(opts, canvas){
 			extraData.firstStim = elt.pairLabel[0];
 			extraData.secondStim = elt.pairLabel[1];
 			extraData.kind = extraData.firstStim == extraData.secondStim ? 'same' : 'different';
-			extraData.distance = elt.distace;
+			extraData.distance = elt.distance;
 			elt.data = extraData;
 		});
 		return rawTimeline.slice(0, length);

@@ -45,7 +45,7 @@ $(function () {
         		};
         		launcher.loadMicroComponents(settings, function(){
         			var exp = launcher.createStandardExperiment(settings, increment, {reuseStim: true, saveDescription: true});
-            		exp.meta.startTime = new Date().toLocaleString();
+            		exp.meta.startTime = new Date().toISOString();
         			$bar.progressbar("destroy");
             		//HERE IS WHERE THE EXPERIMENT BEGINS
             		jsPsych.init({

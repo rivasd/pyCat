@@ -134,7 +134,7 @@ function StimEngine(opts, canvas){
 			if(settable){
 				var other = against[elt];
 				if(other == 'free'){
-					other = Math.floor(Math.random() * 2);
+					against[elt] = Math.floor(Math.random() * 2);
 				}
 				if(distance > 0){
 					settable[elt] = other == 0? 1:0;
