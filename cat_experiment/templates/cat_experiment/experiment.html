@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block head %}
+<script src="{% static 'cat_experiment/ajax_setup.js'%}"></script>
 <script src="{% static 'cat_experiment/jspsych.js'%}"></script>
 <script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-categorize.js'%}"></script>
 <script src="{% static 'cat_experiment/jsPsych-plugins/jspsych-text.js'%}"></script>
@@ -19,7 +20,7 @@
 	    <div class="entry">
             <h4 class="entryTitle"><span class="expand">[-] </span>Research Team Identification</h4>
             <p class="entryBody">
-                Research Lead>
+                Research Lead
                 <br/>
                 - Stevan Harnad, PhD.
                 <br/><br/>

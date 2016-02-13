@@ -45,22 +45,40 @@ $(function () {
         		};
         		launcher.loadMicroComponents(settings, function(){
         			var exp = launcher.createStandardExperiment(settings, increment, {reuseStim: true, saveDescription: true});
-            		$bar.progressbar("destroy");
+            		exp.meta.startTime = new Date().toLocaleString();
+        			$bar.progressbar("destroy");
             		//HERE IS WHERE THE EXPERIMENT BEGINS
             		jsPsych.init({
             			display_element: $("#jsPsychTarget"),
             			timeline: exp.timeline,
-            			on_finish: function(){
+            			on_finish: function(data){
             				jsPsych.data.displayData("json");
+            				sendAway({meta: exp.meta, data: data}, alert);
             			}
             		})
         		})
-        		
         	}
         });
         
     }
-
+    
+    function sendAway(data, callback){
+    	$.ajax({
+    		url: 'save',
+    		data:{
+    			meta: JSON.stringify(data.meta),
+    			data: JSON.stringify(data.data)
+    		},
+    		dataType: 'json',
+    		methos: 'POST',
+    		type: 'POST',
+    		success: function(response){
+    			if(callback) callback(response);
+    		}
+    	})
+    }
+    
+    
     $("#start").click(function (e) {
         if (document.getElementById("accept").checked) {
             var top = document.getElementById("top").offsetTop;

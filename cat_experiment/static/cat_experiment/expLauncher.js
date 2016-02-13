@@ -8,7 +8,7 @@ function ExpLauncher(opts, canvas){
 	var module ={};
 	
 	/** @type {StimEngine} */
-	var engine = StimEngine(opts, canvas);
+	var engine;
 	
 	
 	/**
@@ -78,6 +78,7 @@ function ExpLauncher(opts, canvas){
 		
 		function check(){
 			if(count == done){
+				engine  = StimEngine(opts, canvas);
 				callback(settings);
 			}
 		}
@@ -298,7 +299,7 @@ function ExpLauncher(opts, canvas){
 			idx++;
 		}
 		var timeline =[];
-		var meta = {difficulty: difficulty, definitions: definitions};
+		var meta = {parameters: {difficulty: difficulty, definitions: definitions}};
 		var stimuli;
 		// ok so now we should have all we need to create stuff, lets iterate through the given timeline
 		for(var step=0; step<settings.timeline.length; step++){
@@ -331,6 +332,14 @@ function ExpLauncher(opts, canvas){
 					}
 				}
 				else if(block.type == 'categorize'){
+					//I moved the key codes to the main object because i needed the names of the categories there to build them, pull them back here
+					var choices = [];
+					for(var key in settings.categories){
+						if(settings.categories.hasOwnProperty(key)){
+							choices.push(settings.categories[key]);
+						}
+					}
+					block.choices = choices;
 					if(opts.reuseStim){
 						block.timeline = module.getCategorizationTimelineFromSim(stimuli, settings.categories, block.length);
 					}
@@ -338,6 +347,7 @@ function ExpLauncher(opts, canvas){
 						//I dont have code to create a categorization task from scratch but it would simple to do. Ill do this if i have time
 					}
 				}
+				block.return_stim = false;
 				timeline.push(block);
 			}
 		}
@@ -345,7 +355,9 @@ function ExpLauncher(opts, canvas){
 		var browser = get_browser_info();
 		meta.browser = browser.name;
 		meta.browser_version = browser.version;
-		
+		meta.subject = settings.subject;
+		meta.previous = settings.previous;
+		meta.complete = true;
 		return {meta: meta, timeline: timeline};
 	}
 	

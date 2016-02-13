@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from jsonfield import JSONField
 from django.db.models.fields.related import ForeignKey
+from django.conf import settings
 
 # I decided to make this app reusable-ish for other researchers, so these are basic abstract classes for experiments and subjects and
 # other useful objects in research. they are meant to be subclassed by their own models
@@ -16,9 +17,11 @@ class BaseExperiment(models.Model):
     
     app_name = models.CharField(max_length=64)
     label = models.CharField(max_length=32)
-    verbose_name = models.CharField(max_length=128)
-    description = models.TextField()
-    estimated_length = models.CharField(max_length=16)
+    verbose_name = models.CharField(max_length=128, blank=True)
+    description = models.TextField(blank=True)
+    estimated_length = models.CharField(max_length=16, blank=True)
+    allow_repeats = models.BooleanField(help_text="Should participants be able to repeat this experiment? Does not mean they'll get payed twice, but this might create redundant data?")
+    compensated = models.BooleanField(help_text="True if some kind of monetary compensation is currently available for subjects who complete the experiment")
     
     def __str__(self):
         return self.verbose_name
@@ -32,11 +35,13 @@ class BaseSubject(User):
     'User' already has basic contact info and date joined info, so put here fields that are "experimental subject" things like demographics and other
     """
     
+    
+    
     class Meta:
         abstract = True
         
     #optional: birthdate of the subject, to calculate age
-    birthday = models.DateField()
+    birthday = models.DateField(blank=True, null=True)
     
     #optional: sex of the subject. later, add ugettext_lazy() to translate the choices, don't forget!
     gender_choices = (
@@ -44,7 +49,7 @@ class BaseSubject(User):
         ('F', 'female'),
         ('O', 'other'),
     )
-    sex = models.CharField(choices=gender_choices, max_length=1)
+    sex = models.CharField(choices=gender_choices, max_length=1, blank=True)
     
     #optional: subject's main occupation
     occupation_choices= (
@@ -53,11 +58,14 @@ class BaseSubject(User):
         ('pt-student&work', 'part-time student & part-time work'),
         ('ft-student&pt-work', 'full-time student & part-time work'),
     )
-    occupation = models.CharField(max_length=32, choices=occupation_choices)
+    occupation = models.CharField(max_length=32, choices=occupation_choices, blank=True)
     
     #optional: years of schooling
-    years_of_schooling = models.IntegerField()
+    years_of_schooling = models.IntegerField(blank=True, null=True)
     
+    def __str__(self):
+        return self.username
+
 
 # the actual models we are going to be using. Usually this would in another app's models.py importing this file's base abstract classes
 # turns out I need exactly what I coded in the base classes and nothing more, so I only need to make them concrete by declaring a class, no other code
@@ -84,7 +92,7 @@ class Participation(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     complete = models.BooleanField()
     started = models.DateTimeField()
-    browser = models.CharField(max_length=64)
+    # browser = models.CharField(max_length=64)
       
     #this is where the magic happens: store options in json format here so that experimental settings stay the same across sessions
     parameters = JSONField()
@@ -125,9 +133,11 @@ class BaseTrial(models.Model):
     
     provided fields are: order within the block, order within the whole experiment, a generic 'type' field
     """
-    order_in_run = models.IntegerField()
-    order_in_block = models.IntegerField()
-    type = models.CharField(max_length = 32)
+    internal_node_id = models.CharField(max_length=16)
+    trial_index = models.IntegerField()
+    trial_type = models.CharField(max_length=32)
+    time_elapsed = models.IntegerField()
+    timeout = models.BooleanField()
     run = models.ForeignKey(Run)
 
 

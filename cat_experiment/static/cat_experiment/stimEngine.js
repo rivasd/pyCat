@@ -45,6 +45,9 @@ function StimEngine(opts, canvas){
 		var width = opts.width;
 	}
 	
+	canvas.height = size * height;
+	canvas.width = size * width;
+	
 	
 	//helper shuffle function
 	function shuffle(array) {
@@ -183,6 +186,10 @@ function StimEngine(opts, canvas){
 		function spreadConstraints(x, y, val){
 			neighbors.forEach(function(elem, idx, arr) {
 				if(isDrawable(x+elem[0], y+elem[1])){
+					var list = struct[x+elem[0]][y+elem[1]];
+					if(list == undefined){
+						struct[x+elem[0]][y+elem[1]] = [];
+					}
 					struct[x+elem[0]][y+elem[1]].push(val);
 				}
 			});

@@ -8,17 +8,24 @@ import json
 #Create your models here.
 class Block(BaseBlock):
     pass
-      
-class Trial(BaseTrial):
-    block = models.ForeignKey(Block, on_delete=models.CASCADE)
     
-    #fields specific to our experiment
-    similarity = models.IntegerField()
+class CategorizationTrial(BaseTrial):
+    handles = 'categorize'
+    key_press = models.IntegerField()
     rt = models.IntegerField()
     correct = models.BooleanField()
-    pair_type = models.CharField(max_length = 16)
-    pair_distance = models.IntegerField()
-    stimulus_category = models.CharField(max_length= 16)
+    category = models.CharField(max_length=16)
+    
+class SimilarityTrial(BaseTrial):
+    handles = 'similarity'
+    sim_score = models.IntegerField()
+    rt = models.IntegerField()
+    firstStim = models.CharField(max_length=16)
+    secondStim = models.CharField(max_length=16)
+    kind = models.CharField(max_length=10)
+    distance = models.IntegerField()
+    
+    
     
 ############## models for experimental settings #####################
     
