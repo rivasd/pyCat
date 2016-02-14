@@ -43,7 +43,6 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = (
     'cat_experiment',
-    'expData',
     'expManager',
     'django.contrib.sites',
     'allauth',

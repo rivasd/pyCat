@@ -2,7 +2,7 @@ from django.db import models
 from expManager.models import BaseBlock, BaseTrial, Participation
 from django.db.models.fields.related import ForeignKey
 from django.utils.translation import ugettext as _
-from cat_experiment.exceptions import SettingException
+from expManager.exceptions import SettingException
 import json
 
 #Create your models here.
