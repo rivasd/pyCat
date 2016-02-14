@@ -53,7 +53,7 @@ $(function () {
             			timeline: exp.timeline,
             			on_finish: function(data){
             				jsPsych.data.displayData("json");
-            				sendAway({meta: exp.meta, data: data}, alert);
+            				sendAway({meta: exp.meta, data: data}, postSave);
             			}
             		})
         		})
@@ -78,6 +78,15 @@ $(function () {
     	})
     }
     
+    
+    function postSave(response){
+    	if(response['error']){
+    		alert(response.error);
+    	}
+    	else if(response['success']){
+    		alert(response.success);
+    	}
+    }
     
     $("#start").click(function (e) {
         if (document.getElementById("accept").checked) {

@@ -85,7 +85,7 @@ def save(request):
         participation = Participation(experiment=experiment, subject = subject, complete=finished, started=startTime, parameters=parameters)
         participation.save()
     else:
-        participation = Participation.objects.get(pk=previous)
+        participation = Participation.objects.select_related().get(pk=previous)
         
     
     new_run = Run(participation=participation, start_time=startTime, end_time = datetime.datetime.now())
@@ -114,18 +114,21 @@ def save(request):
             instances.append(instance)
         
         # finally we do the INSERTs !
-        
         model.objects.bulk_create(instances)
 #         except Exception:
 #             raise Exception
 #             return JsonResponse({'error': _('Failure to bulk write to database, contact administrator')})
         
-        # SUCCESS!! :) <3
-        # mark the participation as complete if this run was enough
-        participation.complete = True
-        participation.save()
-        request.session['lastCompleted'] = experiment.label
+    # SUCCESS!! :) <3
+    # mark the participation as complete if this run was enough
+    participation.complete = True
+    participation.save()
+    if experiment.compensated:
+        # there might be monetary compensation, check for any paid
+        pass
         
-        return JsonResponse({'success': _('Your data has been recorded successfully, thank you very much!')})
+    request.session['lastCompleted'] = experiment.label
+    
+    return JsonResponse({'success': _('Your data has been recorded successfully, thank you very much!')})
         
         

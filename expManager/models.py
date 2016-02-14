@@ -21,7 +21,10 @@ class BaseExperiment(models.Model):
     description = models.TextField(blank=True)
     estimated_length = models.CharField(max_length=16, blank=True)
     allow_repeats = models.BooleanField(help_text="Should participants be able to repeat this experiment? Does not mean they'll get payed twice, but this might create redundant data?")
-    compensated = models.BooleanField(help_text="True if some kind of monetary compensation is currently available for subjects who complete the experiment")
+    compensated = models.BooleanField(help_text="True if some kind of monetary compensation is currently available for subjects who complete the experiment", default=False)
+    max_payouts = models.IntegerField(help_text="How many times can a subject get payed (each payout needs a new participation)", blank=True, null=True)
+    allow_do_overs = models.BooleanField(help_text="Should we allow subjects to erase non-claimed payments and create a better one by redoing an exp. ?", blank=True, default=False)
+    
     
     def __str__(self):
         return self.verbose_name
@@ -107,6 +110,26 @@ class Run(models.Model):
     participation = models.ForeignKey(Participation)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
+    
+    
+class Payment(models.Model):
+    """
+    Represents a claim for PayPal monetary compensation for a completed participation
+    
+    Avoid creating this liberally, only when it could actually be payed. For now only one payment per participation is enforced.
+    I guess you could always create dummy Participation objects to circumvent this
+    """
+    
+    participation = models.OneToOneField(Participation)
+    amount= models.FloatField()
+    currency = models.CharField(max_length=3, default='CAD')
+    time_created = models.DateTimeField(auto_now_add=True)
+    time_sent = models.DateTimeField(blank=True)
+    sent = models.BooleanField(default=False)
+    payout_item_id = models.CharField(max_length=16, blank=True)
+    transaction_id = models.CharField(max_length=20, blank=True)
+    time_processed = models.DateTimeField(blank=True)
+    receiver = models.EmailField()
     
 ######################## models to save and manipulate data ##################################
 
