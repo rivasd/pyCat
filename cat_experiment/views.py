@@ -157,7 +157,7 @@ def save(request):
                 amount += 0.05
     
         try:
-            payment = participation.createPayment(amount)
+            payment = participation.createPayment(round(amount, 2))
             # Translators: the symbols '%f.2' are replaced by the amount, and '%s' by the currency
             payment_message = _("You have earned a payment of %f.2 %s. Go to your profile page to claim it!")
         except PayoutException as pay_ex:
@@ -169,11 +169,8 @@ def save(request):
     return JsonResponse({'success': _('Your data has been recorded successfully, thank you very much!')+payment_message})
        
 
-def claim(request):
-    """
-    Another JSON view, this one used to execute payment
-    """
+
     
-    if not request.user.is_authenticated():
-        pass
+    
+    
         

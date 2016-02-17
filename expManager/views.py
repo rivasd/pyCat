@@ -1,9 +1,10 @@
 from django.shortcuts import render
 from django.template import RequestContext
-from django.conf import settings
-from importlib import import_module
-from expManager.models import Experiment
-from django.views.generic.base import View
+from expManager.models import Payment, Experiment
+from django.http.response import JsonResponse
+from django.utils.translation import ugettext as _
+from expManager.exceptions import PayoutException
+
 
 # Create your views here.
 def home(request):
@@ -16,12 +17,28 @@ def home(request):
     return render(request, 'homepage.html', RequestContext(request, {'manips': available}))
 
 
-#helper functions
-
-def check_manips():
+def claim(request, code):
     """
-    Verify that the Experiments table listing available experiment really matches the current configuration
+    Another JSON view, this one used to execute payment
     """
     
-    pass
+    error=""
+    try:
+        payment = Payment.objects.get(pk=code)
+        try:
+            payment.pay(request)
+        except PayoutException as e:
+            error =_("Payment delivery failed: ")+str(e)
+    except Payment.DoesNotExist:
+        payment = None
+        error = _("Invalid payment code")
+    
+    if request.is_ajax():
+        if error != "":
+            return JsonResponse({'error':error})
+        else:
+            return JsonResponse({'success': _("Yay! Payment successfully sent to: ")+payment.receiver})
+    else:
+        return render(request, 'payout.html', RequestContext(request, {'error': error, 'payment': payment}))
+    
 

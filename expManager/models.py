@@ -8,6 +8,7 @@ from expManager.exceptions import PayoutException, SettingException
 from django.utils.translation import ugettext_lazy as _l
 from django.utils.translation import ugettext as _
 import paypalrestsdk
+import datetime
 
 
 # I decided to make this app reusable-ish for other researchers, so these are basic abstract classes for experiments and subjects and
@@ -40,7 +41,8 @@ class BaseExperiment(models.Model):
             raise SettingException(_("Cannot add negative funds to experiment"))
         
         if self.funds_remaining is not None:
-            self.funds_remaining = self.funds_remaining + boost
+            self.funds_remaining = self.funds_remaining + round(boost, 2)
+            self.funds_remaining = round(self.funds_remaining, 2)
             self.save()
         else:
             raise SettingException(_("cannot add funds to an unfunded experiment"))
@@ -51,6 +53,7 @@ class BaseExperiment(models.Model):
         
         if self.funds_remaining is not None:
             self.funds_remaining = self.funds_remaining - amount if self.funds_remaining - amount > 0.0 else 0.0
+            self.funds_remaining = round(self.funds_remaining, 2)
             self.save()
         else:
             raise SettingException(_("cannot subtract funds from an unfunded experiment"))
@@ -167,10 +170,14 @@ class Payment(models.Model):
     sent = models.BooleanField(default=False)
     payout_item_id = models.CharField(max_length=16, blank=True, null=True)
     transaction_id = models.CharField(max_length=20, blank=True, null=True)
+    payout_batch_id = models.CharField(max_length=16, blank=True, null=True)
     time_processed = models.DateTimeField(blank=True, null=True)
     receiver = models.EmailField(null=True)
+    status = models.CharField(max_length=16, blank=True)
     
     def save(self, *args, **kwargs):
+        
+        self.amount = round(self.amount, 2) # realized floats return float with crazy decimal developments because computers cannot really represent base-10
         if self.pk is None: # do all the below code only for new instances
             if not self.participation.experiment.compensated:
                 raise PayoutException(_("This experiment does not currently offer monetary compensation"))
@@ -184,7 +191,6 @@ class Payment(models.Model):
             self.participation.experiment.deductFunds(self.amount) # Since a Payment is also a promise to a subject that he/she will get paid, deduct the money immediately on creation
         
         super(Payment, self).save(*args, **kwargs)
-    
     
     def pay(self, request, email=None):
         """
@@ -206,10 +212,13 @@ class Payment(models.Model):
             # looks like this has already been paid...
             raise PayoutException(_("Payment already sent. Contact us if this is an error"))
         
+        if self.receiver is None:
+            raise PayoutException(_("Your account must have an email address confirmed before you can claim payments"))
+        
         if email is None:
             email = self.receiver
             
-        credentials = SocialApp.objects.get(provider='Paypal') #TODO maybe add capabilities to use multiple PayPal accounts? though they would not be private to admins...
+        credentials = SocialApp.objects.get(provider='paypal') #TODO maybe add capabilities to use multiple PayPal accounts? though they would not be private to admins...
         client_id = credentials.client_id
         secret = credentials.secret
         paypalrestsdk.configure({
@@ -221,7 +230,7 @@ class Payment(models.Model):
         # attempt payout
         payout = paypalrestsdk.Payout({
             "sender_batch_header": {
-                "sender_batch_id": "batch_"+self.pk,
+                "sender_batch_id": "batch_"+str(self.pk),
                 "email_subject": _("You have a payment from the Cognition Communication Lab at UQAM"),
             },
             "items": [
@@ -233,15 +242,21 @@ class Payment(models.Model):
                     },
                     "receiver": email,
                     "note": _("Thank you!"),
-                    "sender_item_id": "item_"+self.pk
+                    "sender_item_id": "item_"+str(self.pk)
                 }
             ]
         })
         
         if payout.create(sync_mode=True):
-            
-            # Do stuff to mark this payment as completed
+            # DONE: do stuff to mark this payment as completed
             self.sent = True
+            self.participation.experiment.deductFunds(float(payout.batch_header.fees.value)) # don't forget to deduct the paypal fees since we pay them!
+            self.time_sent = datetime.datetime.now()
+            self.payout_batch_id = payout.batch_header.payout_batch_id
+            self.status = payout.items[0].transaction_status
+            self.payout_item_id = payout.items[0].payout_item_id
+            self.transaction_id = payout.items[0].transaction_id
+            self.time_processed = payout.items[0].time_processed
             self.save()
             return payout
         else:
