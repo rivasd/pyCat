@@ -357,6 +357,8 @@ function ExpLauncher(opts, canvas){
 		meta.subject = settings.subject;
 		meta.previous = settings.previous;
 		meta.complete = true;
+		meta.exp_id = settings.exp_id;
+		meta.current_exp = settings.current_exp;
 		return {meta: meta, timeline: timeline};
 	}
 	

@@ -47,13 +47,13 @@ class BaseExperiment(models.Model):
         
     def deductFunds(self, amount):
         if amount <=0:
-            raise SettingException(_("Cannot substract negative funds from experiment"))
+            raise SettingException(_("Cannot subtract negative funds from experiment"))
         
         if self.funds_remaining is not None:
             self.funds_remaining = self.funds_remaining - amount if self.funds_remaining - amount > 0.0 else 0.0
             self.save()
         else:
-            raise SettingException(_("cannot substrasct funds from an unfunded experiment"))
+            raise SettingException(_("cannot subtract funds from an unfunded experiment"))
 
 class BaseSubject(models.Model):
     """
@@ -137,6 +137,7 @@ class Participation(models.Model):
 
         payment = Payment(participation=self, amount=amount, receiver=receiver)
         payment.save()
+        return payment
         
 class Run(models.Model):
     """
@@ -167,23 +168,25 @@ class Payment(models.Model):
     payout_item_id = models.CharField(max_length=16, blank=True, null=True)
     transaction_id = models.CharField(max_length=20, blank=True, null=True)
     time_processed = models.DateTimeField(blank=True, null=True)
-    receiver = models.EmailField()
+    receiver = models.EmailField(null=True)
     
     def save(self, *args, **kwargs):
-        if not self.participation.experiment.compensated:
-            raise PayoutException(_("This experiment does not currently offer monetary compensation"))
+        if self.pk is None: # do all the below code only for new instances
+            if not self.participation.experiment.compensated:
+                raise PayoutException(_("This experiment does not currently offer monetary compensation"))
+            
+            if self.amount > self.participation.experiment.funds_remaining:
+                raise PayoutException(_("Sorry! not enough funds remaining to honor this payment"))
+            
+            if Payment.objects.filter(participation__experiment=self.participation.experiment, participation__subject=self.participation.subject).count() >= self.participation.experiment.max_payouts:
+                raise PayoutException(_("You have exceeded the current limit of payments for this experiment"))
+            
+            self.participation.experiment.deductFunds(self.amount) # Since a Payment is also a promise to a subject that he/she will get paid, deduct the money immediately on creation
         
-        if self.amount > self.participation.experiment.funds_remaining:
-            raise PayoutException(_("Sorry! not enough funds remaining to honor this payment"))
-        
-        if Payment.objects.filter(participation__experiment=self.participation.experiment, participation__subject=self.participation.subject).count() >= self.participation.experiment.max_payouts:
-            raise PayoutException(_("You have exceeded the current limit of payments for this experiment"))
-        
-        self.participation.experiment.funds_remaining = self.participation.experiment.funds_remaining - self.amount # Since a Payment is also a promise to a subject that he/she will get paid, deduct the money immediately on creation
         super(Payment, self).save(*args, **kwargs)
     
     
-    def pay(self, email=None):
+    def pay(self, request, email=None):
         """
         Attempts to send the funds by PayPal. Since this deals with $$$, exceptions will be thrown if
         inconsistencies occur, make sure to catch them.
@@ -193,14 +196,20 @@ class Payment(models.Model):
         or we added funds that we did not really have.  
         """
         
+        if not request.user.is_authenticated():
+            raise PayoutException(_("You must be logged in to claim a payment"))
+        
+        if not self.participation.subject.user == request.user:
+            raise PayoutException(_("Payouts must be claimed by the same user who received them"))
+        
         if self.sent or self.time_sent is not None or self.time_processed is not None or self.payout_item_id is not None:
             # looks like this has already been paid...
             raise PayoutException(_("Payment already sent. Contact us if this is an error"))
         
         if email is None:
-            email = self.participation.subject.user.email
+            email = self.receiver
             
-        credentials = SocialApp.objects.get(provider='Paypal')
+        credentials = SocialApp.objects.get(provider='Paypal') #TODO maybe add capabilities to use multiple PayPal accounts? though they would not be private to admins...
         client_id = credentials.client_id
         secret = credentials.secret
         paypalrestsdk.configure({
@@ -209,6 +218,34 @@ class Payment(models.Model):
             'client_secret': secret
         })
         
+        # attempt payout
+        payout = paypalrestsdk.Payout({
+            "sender_batch_header": {
+                "sender_batch_id": "batch_"+self.pk,
+                "email_subject": _("You have a payment from the Cognition Communication Lab at UQAM"),
+            },
+            "items": [
+                {
+                    "recipient_type": "EMAIL",
+                    "amount": {
+                        "value": self.amount,
+                        "currency": self.currency,
+                    },
+                    "receiver": email,
+                    "note": _("Thank you!"),
+                    "sender_item_id": "item_"+self.pk
+                }
+            ]
+        })
+        
+        if payout.create(sync_mode=True):
+            
+            # Do stuff to mark this payment as completed
+            self.sent = True
+            self.save()
+            return payout
+        else:
+            raise PayoutException(payout.error)
     
 ######################## models to save and manipulate data ##################################
 
