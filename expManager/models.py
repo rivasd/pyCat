@@ -23,7 +23,7 @@ class BaseExperiment(models.Model):
         abstract = True
     
     app_name = models.CharField(max_length=64)
-    label = models.CharField(max_length=32)
+    label = models.CharField(max_length=32, unique=True)
     verbose_name = models.CharField(max_length=128, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     estimated_length = models.CharField(max_length=16, blank=True, null=True)
@@ -62,7 +62,7 @@ class BaseSubject(models.Model):
     """
     Abstract base model for a registered human subject with it's full profile data
     
-    Uses multi-table inheritance from the base User model that ships with django.
+    Uses a OnetoOnefied to the base User model that ships with django.
     'User' already has basic contact info and date joined info, so put here fields that are "experimental subject" things like demographics and other
     """
     
@@ -105,17 +105,28 @@ class BaseSubject(models.Model):
 class Subject(BaseSubject):
       
     pass
-     
+    
 class Experiment(BaseExperiment):
     participations = models.ManyToManyField(Subject, through='Participation')
     pass
  
+class Researcher(models.Model):
+    """
+    An extension on the Django user model that represents users who are researchers and allowed to get data.
+    
+    It does look like a Django permission, but first, I have no idea how to use them, and also, it's nice to store Researcher data like institution, degree, field, etc.
+    """
+    
+    user = models.OneToOneField(settings.AUTH_USER_MODEL)
+    institution = models.CharField(max_length=32, blank=True, null=True)
+    researchs = models.ManyToManyField(Experiment, blank=True, null=True)
+    
 class Participation(models.Model):
     """
     Represents a single participation of a Subject to an Experiment
       
     Meant to hold multiple Run objects, allows a participation to be completed in different attempts
-    I recommend to always get a Participation instance with select_related
+    I recommend to always get a Participation instance with select_related()
     """
       
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
@@ -130,7 +141,7 @@ class Participation(models.Model):
     def createPayment(self, amount, receiver=None, curr='CAD', greedy=None):
         """
         Creates a payment linked to this participation. Default currency canadian dollars
-        Returns false on failure from now, should it raise something? what is the best practice here? you tell me...
+        raises exceptions on failure
         """
         if hasattr(self, 'payment'):
             raise PayoutException(_("Payment already created for this participation"))
@@ -177,7 +188,7 @@ class Payment(models.Model):
     
     def save(self, *args, **kwargs):
         
-        self.amount = round(self.amount, 2) # realized floats return float with crazy decimal developments because computers cannot really represent base-10
+        self.amount = round(self.amount, 2) # realized amount sometimes return float with crazy decimal developments because computers cannot really represent base-10
         if self.pk is None: # do all the below code only for new instances
             if not self.participation.experiment.compensated:
                 raise PayoutException(_("This experiment does not currently offer monetary compensation"))
@@ -264,37 +275,39 @@ class Payment(models.Model):
     
 ######################## models to save and manipulate data ##################################
 
-class BaseBlock(models.Model):
-    """
-    Base class for an experimental block (series of consecutive similar trials)
-    
-    A great deal of psychological experiments are structured through blocks of trials. 
-    This model is used to group trials by block but it is not necessary to use it, some experiments are not sturctured with trial blocks
-    Since I still haven't solved the foreignkeys-to-abstract-models problem, and blocks get most of their meaning from the Participation and Trials they are linked to,
-    This class will be mostly empty for now :(
-    """
-    
-    class Meta:
-        abstract = True
-    
-    block_type = models.CharField(max_length=16)
-    order_in_run = models.IntegerField()
-    run = models.ForeignKey(Run)
-    
+
+# TODO: Create a custom manager for trials that forces selection of all related objects (the Run, the Participation, the Subject)
 class BaseTrial(models.Model):
     """
-    Base class to store data for a single experimental trial
+    Base class to store data for a single experimental trial. This should be the meat and bones of the lab.
     
-    provided fields are: order within the block, order within the whole experiment, a generic 'type' field
+    
     """
     class Meta:
         abstract = True
     
-    internal_node_id = models.CharField(max_length=16)
+    internal_node_id = models.CharField(max_length=24)
     trial_index = models.IntegerField()
     trial_type = models.CharField(max_length=32)
     time_elapsed = models.IntegerField()
     timeout = models.BooleanField(blank=True)
     run = models.ForeignKey(Run)
-
-
+    # TODO: Maybe start denormalizing and include the subject id in the trial model. Should wait and see if the projects takes off and profile it...
+    @classmethod
+    def get_datafield_names(cls):
+        columns = ['subject_id']
+        for field in cls._meta.get_fields():
+            if field.remote_field is None and not field.auto_created and not field.is_relation:
+                columns.append(field.name)
+        return columns
+    
+    def get_subject_id(self):
+        return self.run.participation.subject.id
+    
+    def toDict(self):
+        data = {}
+        for col in self.get_datafield_names():
+            if hasattr(self, col):
+                data[col] = getattr(self, col)
+        data['subject_id'] = self.get_subject_id()
+        return data

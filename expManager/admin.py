@@ -1,9 +1,10 @@
 from django.contrib import admin
-from expManager.models import Experiment, Subject, Participation, Payment
+from expManager.models import Experiment, Subject, Participation, Payment, Researcher
  
 admin.site.register(Experiment)
 admin.site.register(Subject)
 admin.site.register(Participation)
+admin.site.register(Researcher)
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):

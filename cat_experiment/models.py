@@ -1,13 +1,11 @@
 from django.db import models
-from expManager.models import BaseBlock, BaseTrial, Participation
-from django.db.models.fields.related import ForeignKey
+from expManager.models import BaseTrial, Participation
 from django.utils.translation import ugettext as _
 from expManager.exceptions import SettingException
 import json
 
 #Create your models here.
-class Block(BaseBlock):
-    pass
+
     
 class CategorizationTrial(BaseTrial):
     handles = 'categorize'

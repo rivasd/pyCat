@@ -1,9 +1,14 @@
 from django.shortcuts import render
 from django.template import RequestContext
 from expManager.models import Payment, Experiment
-from django.http.response import JsonResponse
+from django.http.response import JsonResponse, HttpResponse
 from django.utils.translation import ugettext as _
 from expManager.exceptions import PayoutException
+from django.contrib.auth.decorators import login_required
+import io
+import zipfile
+from expManager.utils import get_csv_iostring_from_participation
+import datetime
 
 
 # Create your views here.
@@ -41,4 +46,44 @@ def claim(request, code):
     else:
         return render(request, 'payout.html', RequestContext(request, {'error': error, 'payment': payment}))
     
-
+@login_required
+def download_exp(request, exp_label):
+    """
+    Force download of a zip file of all the experimental data for the experiment.
+    
+    If user is not a researcher of the experiment, return a JsonResponse with an error attribute
+    """
+    
+    if not hasattr(request.user, 'researcher'):
+        return JsonResponse({'error': _("You do not have permission to view experimental data. Are you logged in as the right user?")})
+    
+    try:
+        exp = request.user.researcher.researchs.prefetch_related('participation_set__subject').get(label=exp_label)
+    except:
+        return JsonResponse({'error':_("You are not a researcher for this experiment. Permission denied.")})
+    
+    if 'format' in request.GET:
+        format = request.GET['format']
+    else:
+        format = 'csv'
+    if 'design' in request.GET:
+        design = request.GET['design']
+    else:
+        design = 'within'
+        
+    # Ok time to do the heavy lifting
+    the_zip = io.BytesIO()
+    main_zipfile = zipfile.ZipFile(the_zip, mode='w', compression = zipfile.ZIP_DEFLATED)
+    main_zipfile.debug = 3
+    for participation in exp.participation_set.all():
+        name = "subject_"+str(participation.subject.id)+"-"+exp_label+"-started_"+str(participation.started).replace(' ', '_').replace(':', '-')[:19]
+        data_as_string_io = get_csv_iostring_from_participation(participation)
+        main_zipfile.writestr(name+'.csv', data_as_string_io.getvalue())
+        data_as_string_io.close() # Better close it, you never know
+    main_zipfile.close()
+    # Should be done, now send as attachment
+    response = HttpResponse(the_zip.getvalue(), content_type="application/zip, application/octet-stream")
+    response['Content-Disposition'] = 'attachment; filename="full_data_for_'+exp_label+'_fetched_on_'+str(datetime.date.today())+'.zip"'
+    return response
+        
+    
