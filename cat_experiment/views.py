@@ -159,7 +159,7 @@ def save(request):
         try:
             payment = participation.createPayment(round(amount, 2))
             # Translators: the symbols '%f.2' are replaced by the amount, and '%s' by the currency
-            payment_message = _("You have earned a payment of %f.2 %s. Go to your profile page to claim it!")
+            payment_message = _("You have earned a payment of %f.2 %s. Go to your profile page to claim it!") % (round(payment.amount, 2), payment.currency)
         except PayoutException as pay_ex:
             payment_message = _('However payment will not be issued because of the following reason: ')+str(pay_ex)
     

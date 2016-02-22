@@ -1,5 +1,5 @@
 from django.db import models
-from expManager.models import BaseTrial, Participation
+from expManager.models import BaseTrial, BaseInstruction
 from django.utils.translation import ugettext as _
 from expManager.exceptions import SettingException
 import json
@@ -22,7 +22,6 @@ class SimilarityTrial(BaseTrial):
     secondStim = models.CharField(max_length=16)
     kind = models.CharField(max_length=10)
     distance = models.IntegerField()
-    
     
     
 ############## models for experimental settings #####################
@@ -176,4 +175,7 @@ class Category(models.Model):
     
     def __str__(self):
         return self.name
+    
+class MyInstruction(BaseInstruction):
+    pass
     

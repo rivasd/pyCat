@@ -20,6 +20,7 @@ import expManager.urls
 from django.conf import settings
 from django.apps import apps, AppConfig
 
+
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^accounts/', include(allauth.urls)),

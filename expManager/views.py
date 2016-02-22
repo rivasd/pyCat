@@ -1,6 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.template import RequestContext
-from expManager.models import Payment, Experiment
+from expManager.models import Payment, Experiment, Participation
 from django.http.response import JsonResponse, HttpResponse
 from django.utils.translation import ugettext as _
 from expManager.exceptions import PayoutException
@@ -85,5 +85,37 @@ def download_exp(request, exp_label):
     response = HttpResponse(the_zip.getvalue(), content_type="application/zip, application/octet-stream")
     response['Content-Disposition'] = 'attachment; filename="full_data_for_'+exp_label+'_fetched_on_'+str(datetime.date.today())+'.zip"'
     return response
+
+@login_required
+def profile_redirect(request):
+    return redirect('profile:person', username=request.user.username)
+    pass
+
+def profile(request, username):
+    # Declare here stuff that should be shown whether viewing your own profile or not
+    participations = Participation.objects.prefetch_related('run_set', 'payment', 'experiment').filter(subject__user=request.user)
+    is_researcher = hasattr(request.user, 'researcher')
+    subject = request.user.subject
+    if request.user.is_authenticated() and request.user.username == username: # show full profile when the user views his or her page
+        payments = []
+        for part in participations:
+            if hasattr(part, 'payment') and not part.payment.sent:
+                payments.append(part.payment)
         
-    
+        if is_researcher:
+            researchs = request.user.researcher.researchs.all()
+        else:
+            researchs = []
+            
+        context = {
+            'participations': participations,
+            'is_researcher' : is_researcher,
+            'subject'       : subject,
+            'payments'      : payments,
+            'researchs'     : researchs,
+        }
+        
+        return render(request, 'base_profile.html', context=context)
+        
+    else: # show brief summary when viewing someone else's profile'
+        pass

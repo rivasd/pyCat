@@ -1,15 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from jsonfield import JSONField
 from django.conf import settings
-from paypalrestsdk import Payout, Api
 from allauth.socialaccount.models import SocialApp
 from expManager.exceptions import PayoutException, SettingException
 from django.utils.translation import ugettext_lazy as _l
 from django.utils.translation import ugettext as _
 import paypalrestsdk
 import datetime
-
+from gfklookupwidget.fields import GfkLookupField
 
 # I decided to make this app reusable-ish for other researchers, so these are basic abstract classes for experiments and subjects and
 # other useful objects in research. they are meant to be subclassed by their own models
@@ -248,7 +249,7 @@ class Payment(models.Model):
                 {
                     "recipient_type": "EMAIL",
                     "amount": {
-                        "value": self.amount,
+                        "value": round(self.amount, 2),
                         "currency": self.currency,
                     },
                     "receiver": email,
@@ -311,3 +312,26 @@ class BaseTrial(models.Model):
                 data[col] = getattr(self, col)
         data['subject_id'] = self.get_subject_id()
         return data
+
+class BaseInstruction(models.Model):
+    """
+    Represents a single page of instruction. make it point to a a model of your choice (for example a model holding settings for a task) so that
+    you can retrieve that model with it's instruction_set
+    
+    NEVER let user input get written to this model, especially if is_html is true. Or else make sure to escape script tags when fetching the content
+    """
+    
+    class Meta:
+        abstract = True
+        
+    @classmethod
+    def limit_to_current_app(cls):
+        return {'app_label': cls._meta.app_label}
+    
+    content_type = models.ForeignKey(ContentType)
+    object_id = GfkLookupField('content_type')
+    task = GenericForeignKey('content_type', 'object_id') # See: https://docs.djangoproject.com/en/1.9/ref/contrib/contenttypes/#generic-relations
+    is_html = models.BooleanField(help_text="check this if the content of the instruction text is valid html and wish to have it rendered as such. ")
+    text = models.TextField(help_text='Write your instruction page here! it can even be valid html!')
+    order = models.PositiveIntegerField(help_text="if a setting has multiple instruction pages, we use this number to sort the order in which you want them presented.")
+    after = models.BooleanField(help_text="check if this instruction page is meant to be shown AFTER the task it is attached to.")

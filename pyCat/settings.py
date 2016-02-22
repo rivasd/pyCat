@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
 #this allows me to upload my settings to github and still keep some top secret info!
-from pyCat import secrets
+from . import secrets
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 from django.conf.global_settings import AUTHENTICATION_BACKENDS
@@ -46,6 +46,7 @@ INSTALLED_APPS = (
     'expManager',
     'django.contrib.sites',
     'allauth',
+    'modeltranslation',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
@@ -114,6 +115,12 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Must be set for the django-modeltranslation app otherwise it will create table rows for every django language!
+LANGUAGES = [
+    ('en', 'English'),
+    ('fr', 'Français'),
+    ('es', 'Español'),
+]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
